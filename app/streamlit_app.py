@@ -79,25 +79,38 @@ def preprocess_canvas(canvas_data):
     if canvas_data is None:
         return None
     
-    # Convert RGBA to grayscale
-    if len(canvas_data.shape) == 3 and canvas_data.shape[2] == 4:
-        # Use alpha channel as the drawing (white background, black strokes)
-        alpha = canvas_data[:, :, 3]
-        gray = alpha.astype(np.uint8)
+    # Canvas returns RGBA: black strokes (0,0,0,255) on white (255,255,255,255)
+    if len(canvas_data.shape) == 3:
+        if canvas_data.shape[2] == 4:
+            # Convert RGBA to RGB, then to grayscale
+            rgb = canvas_data[:, :, :3].astype(np.uint8)
+            gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+        else:
+            gray = cv2.cvtColor(canvas_data.astype(np.uint8), cv2.COLOR_BGR2GRAY)
     else:
-        gray = cv2.cvtColor(canvas_data, cv2.COLOR_BGR2GRAY)
+        gray = canvas_data.astype(np.uint8)
     
-    # Check if there's any drawing
-    if np.max(gray) < 10:
+    # Invert: white background (255) -> black (0), black strokes (0) -> white (255)
+    inverted = 255 - gray
+    
+    # Check if there's any drawing (after inversion, strokes should be white/high value)
+    if np.max(inverted) < 50:
         return None
     
-    # Threshold
-    _, binary = cv2.threshold(gray, 30, 255, cv2.THRESH_BINARY)
+    # Threshold to get clean binary
+    _, binary = cv2.threshold(inverted, 50, 255, cv2.THRESH_BINARY)
+    
+    # Morphological cleanup
+    kernel = np.ones((2, 2), np.uint8)
+    binary = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
     
     # Resize to standard size
     resized = cv2.resize(binary, (IMAGE_SIZE, IMAGE_SIZE), interpolation=cv2.INTER_CUBIC)
     
-    return resized
+    # Final threshold to ensure clean binary
+    _, final = cv2.threshold(resized, 127, 255, cv2.THRESH_BINARY)
+    
+    return final
 
 
 def predict(image, model, scaler):
