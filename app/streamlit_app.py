@@ -34,6 +34,26 @@ st.markdown("""
     .incorrect { color: #e74c3c; }
     .stTabs [data-baseweb="tab-list"] { gap: 24px; }
     .stTabs [data-baseweb="tab"] { font-size: 1.1rem; font-weight: bold; }
+    
+    /* Canvas toolbar icons - make them white */
+    [data-testid="stDrawableCanvas"] button {
+        background-color: transparent !important;
+        color: white !important;
+    }
+    [data-testid="stDrawableCanvas"] button svg {
+        fill: white !important;
+        stroke: white !important;
+    }
+    [data-testid="stDrawableCanvas"] button:hover {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    /* Canvas toolbar container */
+    .drawable-canvas-toolbar button {
+        color: white !important;
+    }
+    .drawable-canvas-toolbar svg {
+        fill: white !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
